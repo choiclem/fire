@@ -5,76 +5,165 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sprinkler Clearance Calculator</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      padding: 2rem;
+      padding: 1rem;
+      margin: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
       max-width: 600px;
       margin: auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
+
     h1 {
       font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
     }
-    input {
-      padding: 0.5rem;
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+
+    .highlighted-label {
+      background-color: yellow;
+      padding: 0.2rem;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    input, select {
+      padding: 0.6rem;
       width: 100%;
-      margin: 1rem 0;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
+
     .result {
       font-weight: bold;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .valid {
       color: green;
     }
+
+    .invalid {
+      color: red;
+    }
+
     img {
-      max-width: 100%;
-      margin-bottom: 1.5rem;
+      width: 100%;
+      height: auto;
+      margin-top: 1.5rem;
+      border-radius: 8px;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.5rem;
+      color: #666;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      input, select {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Sprinkler Clearance Calculator</h1>
-  <img src="new-sprinkler-table.png" alt="Sprinkler Clearance Table" />
+  <div class="container">
+    <h1>Sprinkler Clearance Calculator</h1>
 
-  <label for="verticalInput">Enter Vertical Distance Above Obstruction (mm):</label>
-  <input type="number" id="verticalInput" placeholder="e.g., 220" />
-  <div class="result" id="result"></div>
+    <img src="1.png" alt="Sprinkler Clearance Table" />
+
+    <label for="verticalInput" class="highlighted-label">
+      Enter Vertical Distance Above Obstruction (mm):
+    </label>
+    <input type="number" id="verticalInput" placeholder="e.g., 220" step="any" />
+
+    <small>Horizontal clearance is interpolated linearly within each range.</small>
+
+    <div class="result" id="result"></div>
+
+    <img src="2.png" alt="Sprinkler Distances from Obstructions Diagram" />
+  </div>
 
   <script>
     const table = [
-      { min: 0, max: 49, horizontal: 200 },
-      { min: 50, max: 69, horizontal: 300 },
-      { min: 70, max: 99, horizontal: 400 },
-      { min: 100, max: 124, horizontal: 500 },
-      { min: 125, max: 149, horizontal: 600 },
-      { min: 150, max: 199, horizontal: 700 },
-      { min: 200, max: 249, horizontal: 800 },
-      { min: 250, max: 299, horizontal: 900 },
-      { min: 300, max: 364, horizontal: 1000 },
-      { min: 365, max: 424, horizontal: 1100 },
-      { min: 425, max: 499, horizontal: 1200 },
-      { min: 500, max: 564, horizontal: 1300 },
-      { min: 565, max: 649, horizontal: 1400 },
-      { min: 650, max: 724, horizontal: 1500 },
-      { min: 725, max: 819, horizontal: 1600 },
-      { min: 820, max: 899, horizontal: 1700 },
-      { min: 900, max: Infinity, horizontal: 1800 }
+      { min: 0, max: 49, horizontalMin: 0, horizontalMax: 299 },
+      { min: 50, max: 69, horizontalMin: 300, horizontalMax: 399 },
+      { min: 70, max: 99, horizontalMin: 400, horizontalMax: 499 },
+      { min: 100, max: 124, horizontalMin: 500, horizontalMax: 599 },
+      { min: 125, max: 149, horizontalMin: 600, horizontalMax: 699 },
+      { min: 150, max: 199, horizontalMin: 700, horizontalMax: 799 },
+      { min: 200, max: 249, horizontalMin: 800, horizontalMax: 899 },
+      { min: 250, max: 299, horizontalMin: 900, horizontalMax: 999 },
+      { min: 300, max: 364, horizontalMin: 1000, horizontalMax: 1099 },
+      { min: 365, max: 424, horizontalMin: 1100, horizontalMax: 1199 },
+      { min: 425, max: 499, horizontalMin: 1200, horizontalMax: 1299 },
+      { min: 500, max: 564, horizontalMin: 1300, horizontalMax: 1399 },
+      { min: 565, max: 649, horizontalMin: 1400, horizontalMax: 1499 },
+      { min: 650, max: 724, horizontalMin: 1500, horizontalMax: 1599 },
+      { min: 725, max: 819, horizontalMin: 1600, horizontalMax: 1699 },
+      { min: 820, max: 899, horizontalMin: 1700, horizontalMax: 1799 },
+      { min: 900, max: Infinity, horizontalMin: 1800, horizontalMax: 1800 }
     ];
 
     document.getElementById("verticalInput").addEventListener("input", function () {
       const input = parseFloat(this.value);
       const result = document.getElementById("result");
 
-      if (isNaN(input)) {
-        result.textContent = "";
+      if (isNaN(input) || input < 0) {
+        result.textContent = "❌ Please enter a valid non-negative number.";
+        result.className = "result invalid";
         return;
       }
 
-      const match = table.find(row => input >= row.min && input <= row.max);
+      const range = table.find(row => input >= row.min && input <= row.max);
 
-      if (match) {
-        result.textContent = `✅ Minimum horizontal distance required: ${match.horizontal} mm`;
-      } else {
-        result.textContent = `❌ No matching requirement found.`;
+      if (!range) {
+        result.textContent = "❌ No matching requirement found.";
+        result.className = "result invalid";
+        return;
       }
+
+      let interpolatedHorizontal;
+      if (range.max === range.min || !isFinite(range.max)) {
+        interpolatedHorizontal = range.horizontalMin;
+      } else {
+        const ratio = (input - range.min) / (range.max - range.min);
+        interpolatedHorizontal = Math.round(
+          range.horizontalMin + ratio * (range.horizontalMax - range.horizontalMin)
+        );
+      }
+
+      result.textContent = `✅ Minimum horizontal distance required: ${interpolatedHorizontal} mm`;
+      result.className = "result valid";
     });
   </script>
 </body>
